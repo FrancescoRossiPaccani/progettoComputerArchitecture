@@ -5,6 +5,7 @@
 #include <thread>
 #include <mutex>
 #include <algorithm>
+#include <chrono>
 
 using namespace std;
 
@@ -19,7 +20,7 @@ struct Image{
     {
         return data[(y*width+x)*3+c];
     }
-    // @ Const overload per lettura su const Image
+    //overload per lettura su const Image
     int operator()(int y,int x,int c) const
     {
         return data[(y*width+x)*3+c];
@@ -94,6 +95,27 @@ void saveImage(const string& path, Image& img){
     }
 }
 
+/**
+ * @brief Salva le statisctiche in un file
+ * 
+ * @param filename file contenente le statistiche
+ * @param img_name nome immagine
+ * @param width larghezza immagine
+ * @param height altezza immagine
+ * @param n_thread numero di thread 
+ * @param time_ms tempo di esecuzione [ms]
+ */
+void logPerformance(const string& filename, const string& img_name, int width, int height, int n_threads, long long time_ms){
+    ofstream logFile(filename, ios::app); // apertura in append
+    if(!logFile){
+        cerr << "Errore apertura file log\n";
+        return;
+    }
+
+    // Scrive una riga con: immagine, dimensioni, thread, tempo
+    logFile << img_name << "," << width << "x" << height << "," << n_threads << "," << time_ms << "ms" << endl;
+    logFile.close();
+}
 
 /**
  * @brief Limita un valore tra 0 e 255
@@ -139,7 +161,10 @@ vector<int> getNeighborhood(const Image& img, int y, int x, int c, int M){
  */
 int medianOfBlock(vector<int>& block){
     sort(block.begin(), block.end());
-    return block[block.size()/2];
+    if (block.size()% 2 == 0)
+        return block[(block.size()/2)-1] + block[block.size()/2];
+    else
+        return block[block.size()/2];
 }
 
 /**
@@ -194,30 +219,34 @@ void selectiveMedianWorker(Image& img, Image& out, int M, int threshold, int& co
 
 int main(int argc, char* argv[])
 {
-    if(argc < 2)
+    if(argc < 3)
     {
-        cout << "Uso: " << argv[0] << " nome_immagine\n";
+        cout << "Uso: " << argv[0] << " nome_immagine "<< "num_thread\n";
         return 1;
     }
 
     string img_name = argv[1];
-    string img_ext = ".ppm";
-    string input="./error_images/";
-    string output="./output_images/";
+    string img_ext  = ".ppm";
+    string input    = "./error_images/";
+    string output   = "./output_images/";
 
     Image img = loadImage(input + img_name + img_ext);
-
     cout << "Immagine caricata " << img.height << "x" << img.width << endl;
 
     //Setup filtro 
     int kernel_size=7;
     int threshold=40;
-    int n_threads=12;
+
+    //N threads
+    int n_threads = stoi(argv[2]);
 
     Image out(img.height,img.width);
 
     mutex mtx;
     int counter=0;
+
+    //inizio misurazione
+    auto start = chrono::high_resolution_clock::now();
 
     vector<thread> threads;
 
@@ -229,9 +258,15 @@ int main(int argc, char* argv[])
     for(auto& t:threads)
         t.join();
 
+    //fine misurazione
+    auto end = chrono::high_resolution_clock::now();
+    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+
+    logPerformance("log.txt", img_name + img_ext, img.width, img.height, n_threads, duration.count());
+
 
     saveImage(output + img_name + img_ext,out);
     cout << "Immagine salvata in " << output << endl;
-
+    cout << "Tempo impiegato: " << duration.count() << " ms" << endl << endl; 
     return 0;
 }
