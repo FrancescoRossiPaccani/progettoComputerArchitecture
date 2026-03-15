@@ -8,8 +8,7 @@
 
 using namespace std;
 
-struct Image
-{
+struct Image{
     int width;
     int height;
     vector<int> data;
@@ -20,14 +19,20 @@ struct Image
     {
         return data[(y*width+x)*3+c];
     }
+    // @ Const overload per lettura su const Image
+    int operator()(int y,int x,int c) const
+    {
+        return data[(y*width+x)*3+c];
+    }
 };
 
-////////////////////////////////////////////////////////////
-// Load image
-////////////////////////////////////////////////////////////
-
-Image loadImage(const string& path)
-{
+/**
+ * @brief Carica un immagine
+ * 
+ * @param path path dell'immagine da caricare
+ * @return immgagine in formato Image
+ */
+Image loadImage(const string& path){
     ifstream file(path);
 
     if(!file)
@@ -63,13 +68,13 @@ Image loadImage(const string& path)
 
     return img;
 }
-
-////////////////////////////////////////////////////////////
-// Save image
-////////////////////////////////////////////////////////////
-
-void saveImage(const string& path,Image& img)
-{
+/**
+ * @brief Carica un immagine
+ * 
+ * @param path path dove salvare l'immgine
+ * @param img  immagine da salvare
+ */
+void saveImage(const string& path, Image& img){
     ofstream file(path);
 
     if(!file)
@@ -89,56 +94,103 @@ void saveImage(const string& path,Image& img)
     }
 }
 
-////////////////////////////////////////////////////////////
-// Selective Median Worker
-////////////////////////////////////////////////////////////
 
-void selectiveMedianWorker(Image& img,Image& out,
-                           int M,int threshold,
-                           int& counter,mutex& mtx)
-{
-    int radius=M/2;
+/**
+ * @brief Limita un valore tra 0 e 255
+ * 
+ * @param v valore da limitare
+ * @return int valore clampato
+ */
+inline int clamp(int v){
+    return min(max(v,0),255);
+}
 
-    while(true)
-    {
+/**
+ * @brief Estrae un blocco MxM di pixel intorno a (y,x) per il canale c
+ * 
+ * @param img immagine originale
+ * @param y coordinata verticale
+ * @param x coordinata orizzontale
+ * @param c canale (0=R,1=G,2=B)
+ * @param M dimensione del kernel
+ * @return vector<int> blocco di valori
+ */
+vector<int> getNeighborhood(const Image& img, int y, int x, int c, int M){
+    int radius = M/2;
+    vector<int> block;
+    block.reserve(M*M);
+
+    for(int fy=-radius; fy<=radius; fy++)
+        for(int fx=-radius; fx<=radius; fx++)
+        {
+            int iy = min(max(y+fy,0), img.height-1);
+            int ix = min(max(x+fx,0), img.width-1);
+            block.push_back(img(iy,ix,c));
+        }
+
+    return block;
+}
+
+/**
+ * @brief Calcola la mediana di un blocco di valori
+ * 
+ * @param block vettore di interi
+ * @return int valore mediano
+ */
+int medianOfBlock(vector<int>& block){
+    sort(block.begin(), block.end());
+    return block[block.size()/2];
+}
+
+/**
+ * @brief Applica il filtro selettivo a un singolo pixel
+ * 
+ * @param img immagine originale
+ * @param y coordinata verticale
+ * @param x coordinata orizzontale
+ * @param c canale (0=R,1=G,2=B)
+ * @param M dimensione kernel
+ * @param threshold soglia per sostituire il pixel con la mediana
+ * @return int valore filtrato
+ */
+int selectiveMedianPixel(const Image& img, int y, int x, int c, int M, int threshold){
+    vector<int> block = getNeighborhood(img,y,x,c,M);
+    int med = medianOfBlock(block);
+    int center = img(y,x,c);
+
+    if(abs(center - med) > threshold)
+        return med;
+    else
+        return center;
+}
+
+/**
+ * @brief Worker del filtro selettivo, eseguito da un thread
+ * 
+ * @param img immagine originale
+ * @param out immagine filtrata (output)
+ * @param M dimensione del kernel
+ * @param threshold soglia per sostituire pixel
+ * @param counter contatore condiviso delle righe processate
+ * @param mtx mutex per proteggere il contatore
+ */
+void selectiveMedianWorker(Image& img, Image& out, int M, int threshold, int& counter, mutex& mtx){
+    while(true){
         mtx.lock();
-        int y=counter++;
+        int y = counter++;
         mtx.unlock();
 
-        if(y>=img.height)
-            break;
+        if(y >= img.height) break;
 
         for(int x=0;x<img.width;x++)
-        for(int c=0;c<3;c++)
-        {
-            vector<int> block;
-            block.reserve(M*M);
-
-            for(int fy=-radius;fy<=radius;fy++)
-            for(int fx=-radius;fx<=radius;fx++)
-            {
-                int iy=min(max(y+fy,0),img.height-1);
-                int ix=min(max(x+fx,0),img.width-1);
-
-                block.push_back(img(iy,ix,c));
-            }
-
-            sort(block.begin(),block.end());
-
-            int median=block[block.size()/2];
-            int center=img(y,x,c);
-
-            if(abs(center-median)>threshold)
-                out(y,x,c)=median;
-            else
-                out(y,x,c)=center;
-        }
+            for(int c=0;c<3;c++)
+                out(y,x,c) = selectiveMedianPixel(img,y,x,c,M,threshold);
     }
 }
 
-////////////////////////////////////////////////////////////
-// MAIN
-////////////////////////////////////////////////////////////
+// ============================================
+// =              Main                        =
+// ============================================
 
 int main(int argc, char* argv[])
 {
@@ -153,17 +205,14 @@ int main(int argc, char* argv[])
     string input="./error_images/";
     string output="./output_images/";
 
-    Image img=loadImage(input + img_name + img_ext);
+    Image img = loadImage(input + img_name + img_ext);
 
-    cout<<"Immagine caricata "<<img.height<<"x"<<img.width<<endl;
+    cout << "Immagine caricata " << img.height << "x" << img.width << endl;
 
-    ////////////////////////////////////////////////////////
-
+    //Setup filtro 
     int kernel_size=7;
     int threshold=40;
     int n_threads=12;
-
-    ////////////////////////////////////////////////////////
 
     Image out(img.height,img.width);
 
@@ -174,25 +223,15 @@ int main(int argc, char* argv[])
 
     for(int i=0;i<n_threads;i++)
     {
-        threads.emplace_back(
-            selectiveMedianWorker,
-            ref(img),
-            ref(out),
-            kernel_size,
-            threshold,
-            ref(counter),
-            ref(mtx)
-        );
+        threads.emplace_back(selectiveMedianWorker, ref(img), ref(out), kernel_size, threshold, ref(counter), ref(mtx));
     }
 
     for(auto& t:threads)
         t.join();
 
-    ////////////////////////////////////////////////////////
 
     saveImage(output + img_name + img_ext,out);
-
-    cout<<"Immagine salvata in "<<output<<endl;
+    cout << "Immagine salvata in " << output << endl;
 
     return 0;
 }
