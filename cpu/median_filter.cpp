@@ -9,6 +9,9 @@
 
 using namespace std;
 
+// vtune -collect hotspots ./median_filter img3 #n_thread
+// vtune -report hotspots -group-by=thread -result-dir r001
+
 struct Image{
     int width;
     int height;
@@ -127,6 +130,8 @@ inline int clamp(int v){
     return min(max(v,0),255);
 }
 
+
+
 /**
  * @brief Estrae un blocco MxM di pixel intorno a (y,x) per il canale c
  * 
@@ -137,20 +142,23 @@ inline int clamp(int v){
  * @param M dimensione del kernel
  * @return vector<int> blocco di valori
  */
-vector<int> getNeighborhood(const Image& img, int y, int x, int c, int M){
+//vector<int>
+__attribute__((always_inline)) void getNeighborhood(const Image& img, int y, int x, int c, int M, vector<int> &block){
     int radius = M/2;
-    vector<int> block;
-    block.reserve(M*M);
-
+    //vector<int> block;
+    //block.reserve(M*M);
+    int i = 0;
     for(int fy=-radius; fy<=radius; fy++)
         for(int fx=-radius; fx<=radius; fx++)
         {
             int iy = min(max(y+fy,0), img.height-1);
             int ix = min(max(x+fx,0), img.width-1);
-            block.push_back(img(iy,ix,c));
+            block[i] = img(iy,ix,c);
+            i++;
+            //block.push_back(img(iy,ix,c));
         }
 
-    return block;
+    //return block;
 }
 
 /**
@@ -159,13 +167,25 @@ vector<int> getNeighborhood(const Image& img, int y, int x, int c, int M){
  * @param block vettore di interi
  * @return int valore mediano
  */
-int medianOfBlock(vector<int>& block){
-    sort(block.begin(), block.end());
-    if (block.size()% 2 == 0)
-        return block[(block.size()/2)-1] + block[block.size()/2];
-    else
-        return block[block.size()/2];
+//__attribute__((always_inline)) int medianOfBlock(vector<int>& block){  
+//    sort(block.begin(), block.end());
+//    if (block.size()% 2 == 0)
+//        return block[(block.size()/2)-1] + block[block.size()/2];
+//    else
+//        return block[block.size()/2];
+//}
+int medianOfBlock(vector<int>& block)
+{
+    int mid = block.size()/2;
+    nth_element(block.begin(), block.begin()+mid, block.end());
+    return block[mid];
 }
+//inline int medianOfBlock(vector<int>& block)
+//{
+//    int mid = block.size()/2;
+//    nth_element(block.begin(), block.begin()+mid, block.end());
+//    return block[mid];
+//}
 
 /**
  * @brief Applica il filtro selettivo a un singolo pixel
@@ -178,8 +198,8 @@ int medianOfBlock(vector<int>& block){
  * @param threshold soglia per sostituire il pixel con la mediana
  * @return int valore filtrato
  */
-int selectiveMedianPixel(const Image& img, int y, int x, int c, int M, int threshold){
-    vector<int> block = getNeighborhood(img,y,x,c,M);
+int selectiveMedianPixel(const Image& img, int y, int x, int c, int M, int threshold, vector <int> &block){
+    getNeighborhood(img,y,x,c,M, block);
     int med = medianOfBlock(block);
     int center = img(y,x,c);
 
@@ -200,16 +220,16 @@ int selectiveMedianPixel(const Image& img, int y, int x, int c, int M, int thres
  * @param mtx mutex per proteggere il contatore
  */
 void selectiveMedianWorker(Image& img, Image& out, int M, int threshold, int& counter, mutex& mtx){
+    std::vector<int> v(49);
     while(true){
         mtx.lock();
         int y = counter++;
         mtx.unlock();
-
-        if(y >= img.height) break;
-
+        if(y >= img.height) 
+            break;
         for(int x=0;x<img.width;x++)
             for(int c=0;c<3;c++)
-                out(y,x,c) = selectiveMedianPixel(img,y,x,c,M,threshold);
+                out(y,x,c) = selectiveMedianPixel(img,y,x,c,M,threshold, v);
     }
 }
 
@@ -234,16 +254,18 @@ int main(int argc, char* argv[])
     cout << "Immagine caricata " << img.height << "x" << img.width << endl;
 
     //Setup filtro 
-    int kernel_size=7;
-    int threshold=40;
+    int kernel_size = 7;
+    int threshold = 40;
 
     //N threads
     int n_threads = stoi(argv[2]);
 
     Image out(img.height,img.width);
-
+ 
     mutex mtx;
     int counter=0;
+
+    //cout<<_array1<<_array2;
 
     //inizio misurazione
     auto start = chrono::high_resolution_clock::now();
@@ -262,11 +284,12 @@ int main(int argc, char* argv[])
     auto end = chrono::high_resolution_clock::now();
     auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
 
+    cout << "Tempo impiegato: " << duration.count() << " ms" << endl <<endl; 
+    cout<<counter<<endl;
     logPerformance("log.txt", img_name + img_ext, img.width, img.height, n_threads, duration.count());
 
 
     saveImage(output + img_name + img_ext,out);
     cout << "Immagine salvata in " << output << endl;
-    cout << "Tempo impiegato: " << duration.count() << " ms" << endl << endl; 
     return 0;
 }
