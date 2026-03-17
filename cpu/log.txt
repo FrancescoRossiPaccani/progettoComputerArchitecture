@@ -51,3 +51,16 @@ img3.ppm,1944x2592,20,95ms
 img1.ppm,625x350,20,4ms
 img1.ppm,625x350,20,3ms
 img4.ppm,12288x16320,20,3996ms
+img4.ppm,12288x16320,20,5795ms
+img4.ppm,12288x16320,20,5927ms
+img4.ppm,12288x16320,20,3941ms
+img4.ppm,12288x16320,20,4405ms
+img4.ppm,12288x16320,20,3603ms
+img4.ppm,12288x16320,20,5505ms
+img4.ppm,12288x16320,20,5328ms
+img4.ppm,12288x16320,20,5450ms
+img4.ppm,12288x16320,20,3755ms
+[fase1-mediano] img2.ppm 625x350 threads=20 3ms
+[fase2-bilaterale] img2.ppm 625x350 threads=20 4ms
+[fase1-mediano] img4.ppm 12288x16320 threads=20 4431ms
+[fase2-bilaterale] img4.ppm 12288x16320 threads=20 4155ms
