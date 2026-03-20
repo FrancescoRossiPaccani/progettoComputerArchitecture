@@ -64,3 +64,4 @@ img4.ppm,12288x16320,20,3755ms
 [fase2-bilaterale] img2.ppm 625x350 threads=20 4ms
 [fase1-mediano] img4.ppm 12288x16320 threads=20 4431ms
 [fase2-bilaterale] img4.ppm 12288x16320 threads=20 4155ms
+img4.ppm,12288x16320,20,24845ms
