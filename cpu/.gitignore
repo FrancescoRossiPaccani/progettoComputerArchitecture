@@ -1,2 +1,3 @@
 cpu/*_images/*.ppm
 *.ppm
+*.jpg
