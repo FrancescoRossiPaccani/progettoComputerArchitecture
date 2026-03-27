@@ -166,15 +166,15 @@ void worker(Image& img, Image& out, int kernel, int threshold, std::atomic<int>&
         auto start = chrono::high_resolution_clock::now();
         int start_y = next_row.fetch_add(chunk_size, std::memory_order_relaxed);
         if (start_y >= end_y){ 
-            cout<<"thread finito, blocchi consumati: "<<c<<"\tsecondi impiegati: "<<s<<endl;
+            //cout<<"thread finito, blocchi consumati: "<<c<<"\tsecondi impiegati: "<<s<<endl;
             break;
         }
         auto end = chrono::high_resolution_clock::now();
 
-        cout<<chrono::duration_cast<chrono::milliseconds>(end-start).count() <<" ms\n";
+        //cout<<chrono::duration_cast<chrono::milliseconds>(end-start).count() <<" ms\n";
         c++;
         int current_end_y = std::min(start_y + chunk_size, end_y);
-        cout<<start_y<<endl;
+        //cout<<start_y<<endl;
         processChannel(img.r.data(), out.r.data(), img.width, img.height, kernel, threshold, start_y, current_end_y, bucket_size);
 
         processChannel(img.g.data(), out.g.data(), img.width, img.height, kernel, threshold, start_y, current_end_y, bucket_size);

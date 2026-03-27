@@ -247,11 +247,11 @@ int main(int argc, char* argv[])
 
     string img_name = argv[1];
     string img_ext  = ".ppm";
-    string input    = "./error_images/";
-    string output   = "./output_images/";
+    string input    = "../error_images/";
+    string output   = "../output_images/";
 
     Image img = loadImage(input + img_name + img_ext);
-    cout << "Immagine caricata " << img.height << "x" << img.width << endl;
+    //cout << "Immagine caricata " << img.height << "x" << img.width << endl;
 
     //Setup filtro 
     int kernel_size = 7;
@@ -284,12 +284,13 @@ int main(int argc, char* argv[])
     auto end = chrono::high_resolution_clock::now();
     auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
 
-    cout << "Tempo impiegato: " << duration.count() << " ms" << endl <<endl; 
-    cout<<counter<<endl;
-    logPerformance("log.txt", img_name + img_ext, img.width, img.height, n_threads, duration.count());
+    cout<<"Thread: " << n_threads<<endl;
+    cout << "Tempo: " << duration.count() << " ms" << endl; 
+    //cout<<counter<<endl;
+    //logPerformance("log.txt", img_name + img_ext, img.width, img.height, n_threads, duration.count());
+    cout<<"Errore: "<<"-1"<<"\n";
 
-
-    saveImage(output + img_name + img_ext,out);
-    cout << "Immagine salvata in " << output << endl;
+    //saveImage(output + img_name + img_ext,out);
+    //cout << "Immagine salvata in " << output << endl;
     return 0;
 }
