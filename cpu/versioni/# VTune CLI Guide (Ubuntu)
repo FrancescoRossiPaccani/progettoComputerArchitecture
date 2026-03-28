@@ -1,0 +1,150 @@
+# VTune CLI Guide (Ubuntu)
+
+## 1. Struttura base
+
+# Raccolta dati
+
+vtune -collect <analysis_type> -result-dir=<result_dir> <programma>
+
+# Visualizzazione report
+
+vtune -report <report_type> -r <result_dir>
+
+---
+
+## 2. Analisi principali
+
+# Hotspots (tempo CPU)
+
+vtune -collect hotspots ./median_filter img3
+
+# Threading
+
+vtune -collect threading ./median_filter img3
+
+# Memory Access (cache miss, memoria)
+
+vtune -collect memory-access ./median_filter img3
+
+# Microarchitettura CPU
+
+vtune -collect uarch-exploration ./median_filter img3
+
+---
+
+## 3. Report principali
+
+# Summary generale
+
+vtune -report summary -r r000hs
+
+# Hotspots dettagliati
+
+vtune -report hotspots -r r000hs
+
+# Per funzione
+
+vtune -report hotspots -group-by=function -r r000hs
+
+# Memory report
+
+vtune -report memory-access -r r000ma
+
+# Eventi hardware (cache miss ecc.)
+
+vtune -report hw-events -r r000ma
+
+---
+
+## 4. Metriche importanti
+
+CPU:
+
+* CPU Time
+* CPU Usage %
+
+Memoria:
+
+* L1 / L2 / LLC miss
+* Memory Bound %
+
+Thread:
+
+* Idle time
+* Load imbalance
+
+---
+
+## 5. Workflow consigliato
+
+# Step 1: trova hotspot
+
+vtune -collect hotspots -result-dir=hs ./median_filter img3
+vtune -report hotspots -r hs
+
+# Step 2: analizza memoria
+
+vtune -collect memory-access -result-dir=mem ./median_filter img3
+vtune -report memory-access -r mem
+
+# Step 3: analisi CPU profonda
+
+vtune -collect uarch-exploration -result-dir=uarch ./median_filter img3
+
+---
+
+## 6. Problemi comuni
+
+# Permessi
+
+sudo vtune -collect memory-access ./median_filter img3
+
+# Compilazione con simboli
+
+gcc -g -O2 file.c -o programma
+
+# Controllo PATH
+
+which vtune
+
+---
+
+## 7. Comandi utili
+
+# Lista risultati
+
+ls r*
+
+# Aprire GUI
+
+vtune-gui r000hs
+
+# Modalità web
+
+vtune-backend --web-port=8080
+
+# Eliminare risultati
+
+rm -rf r000*
+
+---
+
+## 8. Cheat sheet veloce
+
+vtune -collect hotspots ./prog
+vtune -collect memory-access ./prog
+
+vtune -report summary -r r000hs
+vtune -report hotspots -r r000hs
+vtune -report memory-access -r r000ma
+vtune -report hw-events -r r000ma
+
+---
+
+## 9. Interpretazione
+
+Hotspots → dove si perde tempo
+Memory-access → problemi di cache/memoria
+Uarch → problemi interni CPU (stall, pipeline)
+
+---

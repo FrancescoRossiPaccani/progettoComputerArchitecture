@@ -198,7 +198,7 @@ int main(int argc, char* argv[])
     // ============================
     NoiseParams p;
 
-    p.saltPepperPct = 30.0;   // 30% salt & pepper
+    p.saltPepperPct = 60.0;   // 30% salt & pepper
     p.saltRatio     = 0.5;    // 50% sale, 50% pepe
 
     p.gaussianPct   = 100.0;  // gaussiano su tutti i pixel

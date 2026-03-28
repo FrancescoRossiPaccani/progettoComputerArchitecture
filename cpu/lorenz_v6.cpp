@@ -331,9 +331,9 @@ void worker(Image& img, Image& out, int threshold, std::atomic<int>& next_row, i
         auto start = chrono::high_resolution_clock::now(); 
         int start_y = next_row.fetch_add(chunk_size, std::memory_order_relaxed);
         auto end = chrono::high_resolution_clock::now();
-        cout<<"overhead sul atomico di: "<<chrono::duration_cast<chrono::nanoseconds>(end-start).count()<<" n   s\n";
+        //cout<<"overhead sul atomico di: "<<chrono::duration_cast<chrono::nanoseconds>(end-start).count()<<" n   s\n";
         if (start_y >= end_y){ 
-            cout << "thread finito, blocchi consumati: " + to_string(c) + "\n";;
+            //cout << "thread finito, blocchi consumati: " + to_string(c) + "\n";;
             break;
         }
 
