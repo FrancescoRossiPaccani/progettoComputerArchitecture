@@ -2,3 +2,6 @@ cpu/*_images/*.ppm
 *.ppm
 *.jpg
 *.png
+cpu/versioni/perf.data
+perf.data
+**/perf.data
