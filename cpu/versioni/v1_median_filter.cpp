@@ -167,19 +167,19 @@ __attribute__((always_inline)) void getNeighborhood(const Image& img, int y, int
  * @param block vettore di interi
  * @return int valore mediano
  */
-//__attribute__((always_inline)) int medianOfBlock(vector<int>& block){  
-//    sort(block.begin(), block.end());
-//    if (block.size()% 2 == 0)
-//        return block[(block.size()/2)-1] + block[block.size()/2];
-//    else
-//        return block[block.size()/2];
-//}
-int medianOfBlock(vector<int>& block)
-{
-    int mid = block.size()/2;
-    nth_element(block.begin(), block.begin()+mid, block.end());
-    return block[mid];
+__attribute__((always_inline)) int medianOfBlock(vector<int>& block){  
+    sort(block.begin(), block.end());
+    if (block.size()% 2 == 0)
+        return block[(block.size()/2)-1] + block[block.size()/2];
+    else
+        return block[block.size()/2];
 }
+//int medianOfBlock(vector<int>& block)
+//{
+//    int mid = block.size()/2;
+//    nth_element(block.begin(), block.begin()+mid, block.end());
+//    return block[mid];
+//}
 //inline int medianOfBlock(vector<int>& block)
 //{
 //    int mid = block.size()/2;

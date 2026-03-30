@@ -169,19 +169,26 @@ __attribute__((always_inline)) void getNeighborhood(const Image& img, int y, int
  * @param block vettore di interi
  * @return int valore mediano
  */
-//__attribute__((always_inline)) int medianOfBlock(vector<int>& block){  
-//    sort(block.begin(), block.end());
-//    if (block.size()% 2 == 0)
-//        return block[(block.size()/2)-1] + block[block.size()/2];
-//    else
-//        return block[block.size()/2];
-//}
-int medianOfBlock(vector<int>& block)
-{
-    int mid = block.size()/2;
-    nth_element(block.begin(), block.begin()+mid, block.end());
-    return block[mid];
+__attribute__((always_inline)) int medianOfBlock(vector<int>& block){ 
+    
+    //auto start = chrono::high_resolution_clock::now();
+
+    sort(block.begin(), block.end());
+    
+    //auto end = chrono::high_resolution_clock::now();
+    //cout << chrono::duration_cast<chrono::nanoseconds>(end - start).count()<<endl;
+
+    if (block.size()% 2 == 0)
+        return block[(block.size()/2)-1] + block[block.size()/2];
+    else
+        return block[block.size()/2];
 }
+//int medianOfBlock(vector<int>& block)
+//{
+//    int mid = block.size()/2;
+//    nth_element(block.begin(), block.begin()+mid, block.end());
+//    return block[mid];
+//}
 //inline int medianOfBlock(vector<int>& block)
 //{
 //    int mid = block.size()/2;
@@ -201,8 +208,12 @@ int medianOfBlock(vector<int>& block)
  * @return int valore filtrato
  */
 int selectiveMedianPixel(const Image& img, int y, int x, int c, int M, int threshold, vector <int> &block){
+
     getNeighborhood(img,y,x,c,M, block);
+    
+
     int med = medianOfBlock(block);
+
     int center = img(y,x,c);
 
     if(abs(center - med) > threshold)
@@ -221,17 +232,29 @@ int selectiveMedianPixel(const Image& img, int y, int x, int c, int M, int thres
  * @param counter contatore condiviso delle righe processate
  * @param mtx mutex per proteggere il contatore
  */
-void selectiveMedianWorker(Image& img, Image& out, int M, int threshold, int& counter, mutex& mtx){
+
+void thread_worker(Image& img, Image& out, int M, int threshold, int& counter, mutex& mtx){
     std::vector<int> v(49);
+    int bb = 0;
+    auto sum = 0;
     while(true){
         mtx.lock();
         int y = counter++;
         mtx.unlock();
-        if(y >= img.height) 
+        if(y >= img.height){
+            cout<<"consumati " << bb << " blocchi\n";
             break;
+        }
         for(int x=0;x<img.width;x++)
-            for(int c=0;c<3;c++)
+            for(int c=0;c<3;c++){
+                bb++;
+                auto start = chrono::high_resolution_clock::now(); 
                 out(y,x,c) = selectiveMedianPixel(img,y,x,c,M,threshold, v);
+                auto end = chrono::high_resolution_clock::now();
+                auto duration = chrono::duration_cast<chrono::nanoseconds>(end - start);
+                sum += duration;
+            }
+        
     }
 }
 
@@ -266,7 +289,7 @@ int main(int argc, char* argv[])
         vector<string> image_names = {"img1", "img2", "img3"};
         img_name = image_names[k];
         Image img = loadImage("../error_images/"+img_name+".ppm");
-        for(int t = 20; t>=1; t--){
+        for(int t = 1; t<=20; t++){
             int n_threads = t;
             for(int j = 0; j<10; j++){
                 std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -283,7 +306,7 @@ int main(int argc, char* argv[])
 
                 for(int i=0;i<n_threads;i++)
                 {
-                    threads.emplace_back(selectiveMedianWorker, ref(img), ref(out), kernel_size, threshold, ref(counter), ref(mtx));
+                    threads.emplace_back(thread_worker, ref(img), ref(out), kernel_size, threshold, ref(counter), ref(mtx));
                 }
 
                 for(auto& t:threads)
