@@ -130,6 +130,7 @@ void processChannel(uint8_t* __restrict in, uint8_t* __restrict out, int w, int 
             m--;
 
             for(int x=bx; x<end_x; x++){
+                auto t_start = chrono::high_resolution_clock::now();
                 int idx = y*w+x;
                 int center = in[idx];
 
@@ -152,7 +153,10 @@ void processChannel(uint8_t* __restrict in, uint8_t* __restrict out, int w, int 
                     hist[newv]++; count += (newv <= m);
                 }
 
+                //auto t_start = chrono::high_resolution_clock::now();
                 updateMedian(m,count,hist,mid);
+                auto t_end = chrono::high_resolution_clock::now();
+                cout<<chrono::duration_cast<chrono::nanoseconds>(t_end-t_start).count() <<"\n";
             }
         }
     }
@@ -163,25 +167,31 @@ void worker(Image& img, Image& out, int kernel, int threshold, std::atomic<int>&
     int c = 0;
     int s = 0;
     while (true){
-        auto start = chrono::high_resolution_clock::now();
+        //auto start = chrono::high_resolution_clock::now();
         int start_y = next_row.fetch_add(chunk_size, std::memory_order_relaxed);
         if (start_y >= end_y){ 
             //cout<<"thread finito, blocchi consumati: "<<c<<"\tsecondi impiegati: "<<s<<endl;
             break;
         }
-        auto end = chrono::high_resolution_clock::now();
+        //auto end = chrono::high_resolution_clock::now();
 
         //cout<<chrono::duration_cast<chrono::milliseconds>(end-start).count() <<" ms\n";
         c++;
         int current_end_y = std::min(start_y + chunk_size, end_y);
         //cout<<start_y<<endl;
+
+
+        //auto start = chrono::high_resolution_clock::now();
         processChannel(img.r.data(), out.r.data(), img.width, img.height, kernel, threshold, start_y, current_end_y, bucket_size);
+
+        //auto end = chrono::high_resolution_clock::now();
+        //cout<<chrono::duration_cast<chrono::microseconds>(end-start).count() <<"\n";
 
         processChannel(img.g.data(), out.g.data(), img.width, img.height, kernel, threshold, start_y, current_end_y, bucket_size);
 
         processChannel(img.b.data(), out.b.data(), img.width, img.height, kernel, threshold, start_y, current_end_y, bucket_size);
         
-        s += (end-start).count();
+        //s += (end-start).count();
 
     }
 

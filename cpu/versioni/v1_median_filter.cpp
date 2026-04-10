@@ -222,14 +222,22 @@ int selectiveMedianPixel(const Image& img, int y, int x, int c, int M, int thres
 void selectiveMedianWorker(Image& img, Image& out, int M, int threshold, int& counter, mutex& mtx){
     std::vector<int> v(49);
     while(true){
+        //auto start = chrono::high_resolution_clock::now();
         mtx.lock();
         int y = counter++;
         mtx.unlock();
         if(y >= img.height) 
             break;
         for(int x=0;x<img.width;x++)
-            for(int c=0;c<3;c++)
+            for(int c=0;c<3;c++){
+            
+                //auto start = chrono::high_resolution_clock::now();
                 out(y,x,c) = selectiveMedianPixel(img,y,x,c,M,threshold, v);
+                //auto end = chrono::high_resolution_clock::now();
+                //cout<<chrono::duration_cast<chrono::nanoseconds>(end - start).count()<<endl;
+            }
+        //auto end = chrono::high_resolution_clock::now();
+        //cout<<chrono::duration_cast<chrono::milliseconds>(end - start).count()<<endl;
     }
 }
 
@@ -251,7 +259,7 @@ int main(int argc, char* argv[])
     string output   = "../output_images/";
 
     Image img = loadImage(input + img_name + img_ext);
-    //cout << "Immagine caricata " << img.height << "x" << img.width << endl;
+    cout << "Immagine caricata " << img.height << "x" << img.width << endl;
 
     //Setup filtro 
     int kernel_size = 7;
