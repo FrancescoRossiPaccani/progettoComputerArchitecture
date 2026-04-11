@@ -267,14 +267,39 @@ int main(int argc, char* argv[])
     //meglio questa che prende parte superiore
 
     int dim_block = 16;
-    dim3 block(dim_block, dim_block);
+    dim3 block(32, 8);
     dim3 grid((img.width  + block.x - 1) / block.x, (img.height + block.y - 1) / block.y);
     
-    auto start = chrono::high_resolution_clock::now();
+    //auto start = chrono::high_resolution_clock::now();
+
+    cudaEvent_t start, stop;
+
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    // start GPU timer
+    cudaEventRecord(start);
+
+
     image_filtering <<< grid, block >>>(img_red_in, img_green_in, img_blue_in, img_red_out, img_green_out, img_blue_out, img.height, img.width);
-    //serve a far aspettare la cpu che la gpu finisca
-    cudaDeviceSynchronize();
-    auto end = chrono::high_resolution_clock::now();
+    
+    // stop GPU timer
+    cudaEventRecord(stop);
+
+    // aspetta fine kernel
+    cudaEventSynchronize(stop);
+
+    // calcolo tempo
+    float ms = 0;
+    cudaEventElapsedTime(&ms, start, stop);
+
+    cout << "Kernel time: " << ms << " ms\n";
+
+    
+    // cleanup
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+    //auto end = chrono::high_resolution_clock::now();
     //Prendo dati elaborati da GPU
     
     cudaMemcpy(out.r.data(), img_red_out  , img_dim, cudaMemcpyDeviceToHost);
@@ -285,7 +310,7 @@ int main(int argc, char* argv[])
 
     // Statistiche finali
     //cout<<"Tempo: " << chrono::duration_cast<chrono::microseconds>(end-start).count() <<" µs\n";
-    cout<<"Tempo: " << chrono::duration_cast<chrono::milliseconds>(end-start).count() <<" ms\n";
+    //cout<<"Tempo: " << chrono::duration_cast<chrono::milliseconds>(end-start).count() <<" ms\n";
 
     //double final_error = calculateError(img_original, out);
     //cout<<"Errore: "<<final_error<<"\n";
