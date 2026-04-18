@@ -178,6 +178,8 @@ __device__ void fast_median(uint8_t *mat, uint8_t &median){
 
 
 
+
+
 __global__ void image_filtering(uint8_t* img_r_in, uint8_t* img_g_in,  uint8_t* img_b_in, uint8_t* img_r_out, uint8_t* img_g_out, uint8_t* img_b_out, int img_h, int img_w){
 
     int x = blockIdx.x * blockDim.x + threadIdx.x; // colonna
@@ -217,7 +219,103 @@ __global__ void image_filtering(uint8_t* img_r_in, uint8_t* img_g_in,  uint8_t* 
 
 }
 
-// ---------------- MAIN ----------------
+// ... [Includi le tue librerie, struct Image, funzioni di load, save, e i kernel] ...
+//
+//int main(int argc, char* argv[])
+//{
+//    if(argc < 1){
+//        cout<<"Uso: "<<argv[0]<<" nome_immagine\n";
+//        return 1;
+//    }
+//
+//    string img_name = argv[1];
+//    
+//    int img_dim = 0;
+//    Image img = loadImage("../error_images/"+img_name+".ppm");
+//    Image out(img.height,img.width);
+//    cout<<"Immagine elaborata: "<<img.width<<"x"<<img.height<<"\n\n";
+//
+//    img_dim = img.width * img.height; 
+//    uint8_t *img_red_in, *img_green_in, *img_blue_in, *img_red_out, *img_green_out, *img_blue_out; 
+//
+//    cudaMalloc(&img_red_in,    img_dim * sizeof(uint8_t));
+//    cudaMalloc(&img_green_in,  img_dim * sizeof(uint8_t));
+//    cudaMalloc(&img_blue_in,   img_dim * sizeof(uint8_t));
+//
+//    cudaMalloc(&img_red_out,   img_dim * sizeof(uint8_t));
+//    cudaMalloc(&img_green_out, img_dim * sizeof(uint8_t));
+//    cudaMalloc(&img_blue_out,  img_dim * sizeof(uint8_t));
+//
+//    cudaMemcpy(img_red_in,   img.r.data(), img_dim, cudaMemcpyHostToDevice);
+//    cudaMemcpy(img_green_in, img.g.data(), img_dim, cudaMemcpyHostToDevice);
+//    cudaMemcpy(img_blue_in,  img.b.data(), img_dim, cudaMemcpyHostToDevice);
+//
+//    cudaEvent_t start, stop;
+//    cudaEventCreate(&start);
+//    cudaEventCreate(&stop);
+//
+//    vector<dim3> test_blocks = {
+//        //dim3(8, 8),     // 64 threads
+//        //dim3(16, 8),    // 128 threads
+//        //dim3(16, 16),   // 256 threads
+//        dim3(32, 8),    // 256 threads (spesso ottima per la coalescenza in memoria)
+//        //dim3(32, 16),   // 512 threads
+//        //dim3(32, 32)    // 1024 threads (massimo consentito)
+//    };
+//
+//    cout << "Avvio Benchmark (100 iterazioni per configurazione)...\n";
+//    cout << "------------------------------------------------------\n";
+//
+//
+//    for(const auto& block : test_blocks) {
+//        
+//        // Calcolo della griglia in base al blocco corrente
+//        dim3 grid((img.width  + block.x - 1) / block.x, 
+//                  (img.height + block.y - 1) / block.y);
+//
+//        float total_ms = 0.0f;
+// 
+//
+//        // --- LOOP PRINCIPALE (100 iterazioni) ---
+//        for(int i = 0; i < 100; i++){
+//            cudaEventRecord(start);
+//
+//            image_filtering <<< grid, block >>>(img_red_in, img_green_in, img_blue_in, img_red_out, img_green_out, img_blue_out, img.height, img.width);
+//            
+//            cudaEventRecord(stop);
+//            cudaEventSynchronize(stop);
+//
+//            float ms = 0;
+//            cudaEventElapsedTime(&ms, start, stop);
+//            total_ms += ms;
+//        }
+//
+//        // Calcolo e stampa della media
+//        float avg_ms = total_ms / 100.0f;
+//        cout << "Configurazione Block(" << block.x << "x" << block.y << ")\t- Tempo medio: " << avg_ms << " ms\n";
+//    }
+//    
+//    cout << "------------------------------------------------------\n";
+//    
+//    cudaMemcpy(out.r.data(), img_red_out  , img_dim, cudaMemcpyDeviceToHost);
+//    cudaMemcpy(out.g.data(), img_green_out, img_dim, cudaMemcpyDeviceToHost);
+//    cudaMemcpy(out.b.data(), img_blue_out , img_dim, cudaMemcpyDeviceToHost);
+//
+//    cudaEventDestroy(start);
+//    cudaEventDestroy(stop);
+//
+//    cudaFree(img_red_in);
+//    cudaFree(img_green_in);
+//    cudaFree(img_blue_in);
+//    cudaFree(img_red_out);
+//    cudaFree(img_green_out);
+//    cudaFree(img_blue_out);
+//
+//    saveImage("./output_images/"+img_name+".ppm", out);
+//    
+//    return 0;
+//}
+//
 int main(int argc, char* argv[])
 {
     if(argc < 1){
@@ -267,39 +365,13 @@ int main(int argc, char* argv[])
     //meglio questa che prende parte superiore
 
     int dim_block = 16;
-    dim3 block(32, 8);
+    dim3 block(dim_block, dim_block);
     dim3 grid((img.width  + block.x - 1) / block.x, (img.height + block.y - 1) / block.y);
     
-    //auto start = chrono::high_resolution_clock::now();
-
-    cudaEvent_t start, stop;
-
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-
-    // start GPU timer
-    cudaEventRecord(start);
-
-
+    auto start = chrono::high_resolution_clock::now();
     image_filtering <<< grid, block >>>(img_red_in, img_green_in, img_blue_in, img_red_out, img_green_out, img_blue_out, img.height, img.width);
-    
-    // stop GPU timer
-    cudaEventRecord(stop);
-
-    // aspetta fine kernel
-    cudaEventSynchronize(stop);
-
-    // calcolo tempo
-    float ms = 0;
-    cudaEventElapsedTime(&ms, start, stop);
-
-    cout << "Kernel time: " << ms << " ms\n";
-
-    
-    // cleanup
-    cudaEventDestroy(start);
-    cudaEventDestroy(stop);
-    //auto end = chrono::high_resolution_clock::now();
+    cudaDeviceSynchronize();
+    auto end = chrono::high_resolution_clock::now();
     //Prendo dati elaborati da GPU
     
     cudaMemcpy(out.r.data(), img_red_out  , img_dim, cudaMemcpyDeviceToHost);
@@ -309,8 +381,8 @@ int main(int argc, char* argv[])
     //Fine applicazione
 
     // Statistiche finali
-    //cout<<"Tempo: " << chrono::duration_cast<chrono::microseconds>(end-start).count() <<" µs\n";
-    //cout<<"Tempo: " << chrono::duration_cast<chrono::milliseconds>(end-start).count() <<" ms\n";
+    //cout<<"Tempo: " <<chrono::duration_cast<chrono::microseconds>(end-start).count() <<" µs\n";
+    cout<<"Tempo: " <<chrono::duration_cast<chrono::milliseconds>(end-start).count() <<" ms\n";
 
     //double final_error = calculateError(img_original, out);
     //cout<<"Errore: "<<final_error<<"\n";

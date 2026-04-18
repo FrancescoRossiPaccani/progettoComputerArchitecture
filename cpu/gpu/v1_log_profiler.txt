@@ -1,24 +1,24 @@
-==PROF== Connected to process 54192 (/home/pacca/Desktop/Magistrale/computerArchitecture/progettoComputerArchitecture/cpu/gpu/v1)
+==PROF== Connected to process 78696 (/home/pacca/Desktop/Magistrale/computerArchitecture/progettoComputerArchitecture/cpu/gpu/v1)
 ==PROF== Profiling "image_filtering" - 0: 0%....50%....100% - 34 passes
-==PROF== Disconnected from process 54192
+==PROF== Disconnected from process 78696
 Immagine 12288x16320
-Tempo: 5686 ms
-[54192] v1@127.0.0.1
+Tempo: 5707 ms
+[78696] v1@127.0.0.1
   image_filtering(unsigned char *, unsigned char *, unsigned char *, unsigned char *, unsigned char *, unsigned char *, int, int) (768, 1020, 1)x(16, 16, 1), Context 1, Stream 7, Device 0, CC 8.6
     Section: GPU Speed Of Light Throughput
     ----------------------- ------------- -------------
     Metric Name               Metric Unit  Metric Value
     ----------------------- ------------- -------------
-    DRAM Frequency          cycle/nsecond          5.85
+    DRAM Frequency          cycle/nsecond          5.86
     SM Frequency            cycle/nsecond          1.24
-    Elapsed Cycles                  cycle    32,149,258
-    Memory Throughput                   %         80.00
-    DRAM Throughput                     %         24.78
-    Duration                      msecond         26.01
-    L1/TEX Cache Throughput             %         80.01
-    L2 Cache Throughput                 %         38.63
-    SM Active Cycles                cycle 32,145,514.12
-    Compute (SM) Throughput             %         90.77
+    Elapsed Cycles                  cycle    32,137,199
+    Memory Throughput                   %         80.02
+    DRAM Throughput                     %         24.79
+    Duration                      msecond         25.98
+    L1/TEX Cache Throughput             %         80.03
+    L2 Cache Throughput                 %         38.41
+    SM Active Cycles                cycle 32,134,601.88
+    Compute (SM) Throughput             %         90.80
     ----------------------- ------------- -------------
 
     INF   The kernel is utilizing greater than 80.0% of the available compute or memory performance of the device. To   
@@ -37,9 +37,9 @@ Tempo: 5686 ms
     -------------------- ----------- ------------
     Executed Ipc Active   inst/cycle         2.57
     Executed Ipc Elapsed  inst/cycle         2.57
-    Issue Slots Busy               %        64.27
+    Issue Slots Busy               %        64.30
     Issued Ipc Active     inst/cycle         2.57
-    SM Busy                        %        90.78
+    SM Busy                        %        90.81
     -------------------- ----------- ------------
 
     WRN   ALU is the highest-utilized pipeline (90.8%) based on active cycles, taking into account the rates of its     
@@ -56,14 +56,14 @@ Tempo: 5686 ms
     --------------------------- ------------ ------------
     Metric Name                  Metric Unit Metric Value
     --------------------------- ------------ ------------
-    Memory Throughput           Gbyte/second        46.41
-    Mem Busy                               %        80.00
-    Max Bandwidth                          %        77.98
-    L1/TEX Hit Rate                        %        74.93
+    Memory Throughput           Gbyte/second        46.47
+    Mem Busy                               %        80.02
+    Max Bandwidth                          %        78.00
+    L1/TEX Hit Rate                        %        74.92
     L2 Compression Success Rate            %            0
     L2 Compression Ratio                                0
-    L2 Hit Rate                            %        84.64
-    Mem Pipes Busy                         %        77.98
+    L2 Hit Rate                            %        84.65
+    Mem Pipes Busy                         %        78.00
     --------------------------- ------------ ------------
 
     Section: Memory Workload Analysis Tables
@@ -97,32 +97,32 @@ Tempo: 5686 ms
     ---------------------------- ----------- ------------
     Metric Name                  Metric Unit Metric Value
     ---------------------------- ----------- ------------
-    One or More Eligible                   %        64.27
+    One or More Eligible                   %        64.30
     Issued Warp Per Scheduler                        0.64
-    No Eligible                            %        35.73
+    No Eligible                            %        35.70
     Active Warps Per Scheduler          warp        10.66
-    Eligible Warps Per Scheduler        warp         4.82
+    Eligible Warps Per Scheduler        warp         4.81
     ---------------------------- ----------- ------------
 
     Section: Warp State Statistics
     ---------------------------------------- ----------- ------------
     Metric Name                              Metric Unit Metric Value
     ---------------------------------------- ----------- ------------
-    Warp Cycles Per Issued Instruction             cycle        16.59
-    Warp Cycles Per Executed Instruction           cycle        16.59
+    Warp Cycles Per Issued Instruction             cycle        16.58
+    Warp Cycles Per Executed Instruction           cycle        16.58
     Avg. Active Threads Per Warp                                   32
     Avg. Not Predicated Off Threads Per Warp                    31.85
     ---------------------------------------- ----------- ------------
 
     WRN   On average, each warp of this kernel spends 6.5 cycles being stalled due to not being selected by the         
-          scheduler. This represents about 39.2% of the total average of 16.6 cycles between issuing two instructions.  
+          scheduler. This represents about 39.1% of the total average of 16.6 cycles between issuing two instructions.  
           Not selected warps are eligible warps that were not picked by the scheduler to issue that cycle as another    
           warp was selected. A high number of not selected warps typically means you have sufficient warps to cover     
           warp latencies and you may consider reducing the number of active warps to possibly increase cache coherence  
           and data locality.                                                                                            
     ----- --------------------------------------------------------------------------------------------------------------
-    WRN   On average, each warp of this kernel spends 5.8 cycles being stalled waiting for a math execution pipeline to 
-          be available. This represents about 34.8% of the total average of 16.6 cycles between issuing two             
+    WRN   On average, each warp of this kernel spends 5.7 cycles being stalled waiting for a math execution pipeline to 
+          be available. This represents about 34.6% of the total average of 16.6 cycles between issuing two             
           instructions. This stall occurs when all active warps execute their next instruction on a specific,           
           oversubscribed math pipeline. Try to increase the number of active warps to hide the existent latency or try  
           changing the instruction mix to utilize all available pipelines in a more balanced way.                       
@@ -137,8 +137,8 @@ Tempo: 5686 ms
     ---------------------------------------- ----------- -------------
     Avg. Executed Instructions Per Scheduler        inst    20,661,120
     Executed Instructions                           inst 1,322,311,680
-    Avg. Issued Instructions Per Scheduler          inst 20,661,177.50
-    Issued Instructions                             inst 1,322,315,360
+    Avg. Issued Instructions Per Scheduler          inst    20,661,178
+    Issued Instructions                             inst 1,322,315,392
     ---------------------------------------- ----------- -------------
 
     Section: Launch Statistics
@@ -167,12 +167,12 @@ Tempo: 5686 ms
     Block Limit Warps                     block            6
     Theoretical Active Warps per SM        warp           48
     Theoretical Occupancy                     %          100
-    Achieved Occupancy                        %        89.35
-    Achieved Active Warps Per SM           warp        42.89
+    Achieved Occupancy                        %        89.33
+    Achieved Active Warps Per SM           warp        42.88
     ------------------------------- ----------- ------------
 
     WRN   This kernel's theoretical occupancy is not impacted by any block limit. The difference between calculated     
-          theoretical (100.0%) and measured achieved occupancy (89.4%) can be the result of warp scheduling overheads   
+          theoretical (100.0%) and measured achieved occupancy (89.3%) can be the result of warp scheduling overheads   
           or workload imbalances during the kernel execution. Load imbalances can occur between warps within a block    
           as well as across blocks of the same kernel. See the CUDA Best Practices Guide                                
           (https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#occupancy) for more details on           

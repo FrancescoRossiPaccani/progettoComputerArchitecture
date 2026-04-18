@@ -184,7 +184,7 @@ __global__ void image_filtering(uint8_t* img_r_in, uint8_t* img_g_in,  uint8_t* 
     int tx_cx = tx+1; //corrente
     int tx_dx = tx+2; //destra
 
-    __shared__ uchar4 kernel[18][18];
+    __shared__ uchar4 kernel[18][19];
 
     kernel[ty_cx][tx_cx].x = img_r_in[index];
     kernel[ty_cx][tx_cx].y = img_g_in[index];
