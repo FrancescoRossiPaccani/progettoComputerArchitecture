@@ -233,12 +233,29 @@ int main(int argc, char* argv[])
     dim3 block(256, 1);
     dim3 grid((img.width  + block.x - 1) / block.x, (img.height + TILE_H - 1) / TILE_H);
     
-    auto start = chrono::high_resolution_clock::now();
+    // --- WARM-UP ---
+    // Eseguiamo il kernel una volta a vuoto per "svegliare" la GPU e caricare il contesto
     image_filtering <<< grid, block >>>(img_red_in, img_green_in, img_blue_in, img_red_out, img_green_out, img_blue_out, img.height, img.width);
     cudaDeviceSynchronize();
-    auto end = chrono::high_resolution_clock::now();
+
+    // --- TIMING CON CUDA EVENTS ---
+    cudaEvent_t start_ev, stop_ev;
+    cudaEventCreate(&start_ev);
+    cudaEventCreate(&stop_ev);
+
+    cudaEventRecord(start_ev);
+    image_filtering <<< grid, block >>>(img_red_in, img_green_in, img_blue_in, img_red_out, img_green_out, img_blue_out, img.height, img.width);
+    cudaEventRecord(stop_ev);
     
-    cout<<"Tempo: " <<chrono::duration_cast<chrono::milliseconds>(end-start).count() <<" ms\n";
+    cudaEventSynchronize(stop_ev);
+    
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start_ev, stop_ev);
+    
+    cout << "Tempo (GPU Kernel): " << milliseconds << " ms" << endl;
+    
+    cudaEventDestroy(start_ev);
+    cudaEventDestroy(stop_ev);
     
     cudaMemcpy(out.r.data(), img_red_out, img_dim, cudaMemcpyDeviceToHost);
     cudaMemcpy(out.g.data(), img_green_out, img_dim, cudaMemcpyDeviceToHost);
