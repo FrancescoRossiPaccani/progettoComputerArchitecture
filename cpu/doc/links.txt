@@ -1,3 +1,0 @@
-
-Come lavorano i diversi tipi di filtri con errore:
-https://www.researchgate.net/publication/374046627_Color_Image_De-noising_Based_on_Mean_Median_and_Gaussian_filters
