@@ -1,2 +1,2 @@
 # progettoComputerArchitecture
-Optimization of Convolutional Filter
+Optimization of Convolutional Median Filter using CPU and GPU
